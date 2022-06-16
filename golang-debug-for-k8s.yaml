@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: golang-debug
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: golang-debug
+  template:
+    metadata:
+      labels:
+        app: golang-debug
+    spec:
+      containers:
+      - args:
+        - --listen=:2345
+        - --headless=true
+        - --log=true
+        - --log-output=debugger,debuglineerr,gdbwire,lldbout,rpc
+        - --accept-multiclient
+        - --api-version=2
+        - exec
+        - ./app
+        image: host.docker.internal:5000/golang-debug:latest
+        name: golang-debug
+        ports:
+        - containerPort: 2345
+        - containerPort: 8090
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: golang-debug
+  name: golang-debug
+spec:
+  ports:
+    - name: "2345"
+      port: 2345
+    - name: "8090"
+      port: 8090
+  selector:
+    app: golang-debug
